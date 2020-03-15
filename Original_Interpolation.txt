@@ -1,0 +1,131 @@
+%%Orignal Data Interpolation Script
+
+% Function for the interpolation of data along either the rising edge alone 
+
+% or both the rising and falling edges through the creation of n new data 
+
+% points 
+
+  
+
+function edges = interpolate(time, compliance) 
+
+  
+
+size_comp = size(compliance); 
+
+rise = zeros(2,2); 
+
+  
+
+% Define an edge as a gap between data points greater than 2e-3 Pa^-1 
+
+difference = 2e-3; 
+
+  
+
+% Loop through all data points to locate the two between which the rise in 
+
+% compliance occurs, store the locations and values of the points at both ends of the 
+
+% edge in a new matrix 'rise' 
+
+for i=2:size_comp(1,2) 
+
+    if compliance(i)-compliance(i-1) > difference 
+
+        rise(1,1) = compliance(i-1); 
+
+        rise(1,2) = compliance(i); 
+
+        rise(2,1) = time(i-1); 
+
+        rise(2,2) = time(i); 
+
+        break 
+
+    end 
+
+end 
+
+  
+
+% Choose number of data points to be created 
+
+n = 50; 
+
+  
+
+jump_points = zeros(n,2); 
+
+  
+
+% Create n new data points along the rising edge at regular intervals 
+
+for i=1:n   
+
+    jump_points(i,1) = rise(2,1) + i*(rise(2,2) - rise(2,1))/n; 
+
+    jump_points(i,2) = rise(1,1) + i*(rise(1,2) - rise(1,1))/n; 
+
+end 
+
+  
+
+% Create data points for falling edge 
+
+% This matrix will be empty for the input of the rising edge data only 
+
+fall = zeros(2,2); 
+
+  
+
+% Loop through all data points to locate the two between which the fall in 
+
+% compliance occurs, store the locations and values of the points at both ends of the 
+
+% edge in a new matrix 'fall' 
+
+for i=2:size_comp(1,2) 
+
+    if compliance(i-1)-compliance(i) > difference 
+
+        fall(1,1) = compliance(i-1); 
+
+        fall(1,2) = compliance(i); 
+
+        fall(2,1) = time(i-1); 
+
+        fall(2,2) = time(i); 
+
+        break 
+
+    end 
+
+end 
+
+  
+
+fall_points = zeros(n,2); 
+
+  
+
+% Create n new data points along the falling edge at regular intervals 
+
+for i=1:n 
+
+    fall_points(i,1) = fall(2,1) + i*(fall(2,2) - fall(2,1))/n; 
+
+    fall_points(i,2) = fall(1,1) - i*(fall(1,1) - fall(1,2))/n; 
+
+end 
+
+  
+
+% Store the new data points in a matrix to be outputted 
+
+edges = vertcat(jump_points, fall_points); 
+
+  
+
+end 

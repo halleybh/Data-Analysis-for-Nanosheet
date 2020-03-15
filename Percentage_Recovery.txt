@@ -1,0 +1,77 @@
+% Function for calculating the percentage recovery of the nanosheet for 
+
+% each data set using the user-selected start and end points of the rising 
+
+% and falling edges 
+
+function percent_recovery = PR_function(edge_times,edge_comps) 
+
+  
+
+% Initialise matrices with the data from the filtering function 
+
+rise_edge_start = [edge_times(1) edge_comps(1)]; 
+
+fall_edge_start = [edge_times(4) edge_comps(4)]; 
+
+fall_edge_end = [edge_times(3) edge_comps(3)]; 
+
+  
+
+% Get the length of each edge 
+
+edge1 = fall_edge_start(2) - rise_edge_start(2); 
+
+edge2 = fall_edge_start(2) - fall_edge_end(2); 
+
+  
+
+% Calculate the difference between the two and use this to extract the 
+
+% overall percentage recovery of the nanosheet 
+
+diff = (edge1) - (edge2); 
+
+percent_recovery = 100 - (diff/(edge1))*100; 
+
+  
+
+end 
+
+ 
+
+% Function for calculating a rough error measure 
+
+% Used to validate the improvement of the novel MATLAB application designed 
+
+% for edge detection over the original user-inputted edges in the original 
+
+% data filter function (datafilter_d1) 
+
+  
+
+function regression_error = rough_mean_error(compliance, RegComp) 
+
+  
+
+% Find the difference between the raw data and the fitted data for each 
+
+% data point 
+
+for i = 1:length(RegComp) 
+
+    error(i) = RegComp(i) - compliance(i); 
+
+end 
+
+  
+
+% Sum over the absolute values of the differences and divide by the number 
+
+% of data points 
+
+regression_error = (sum(abs(error), 'all'))/(length(error)); 
+
+  
+
+end 

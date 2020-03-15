@@ -1,0 +1,181 @@
+% Script for analysing desired data 
+
+close all; clc; 
+
+  
+
+% Bead dimensions 
+
+radius = 2.25e-6; 
+
+  
+
+% Applied force of 6 nN 
+
+force = 6e-9; 
+
+  
+
+% Calculate the cross-sectional area of the bead 
+
+csa = pi*radius*radius;                 
+
+  
+
+% Raw lab data is provided in a MATLAB struct. User loads the desired 
+
+% experimental data into the workspace for conversion into an array of 
+
+% cells 
+
+struct = struct2cell(StructSum); 
+
+  
+
+% Extract raw displacement and time data, convert displacement data to the 
+
+% correct scale 
+
+displacement = (struct{5}.r_nm).*1e-9; 
+
+time = struct{5}.time; 
+
+  
+
+% Calculate stress, strain, and compliance for each data point 
+
+strain = displacement/radius; 
+
+stress = force/csa; 
+
+compliance = strain/stress; 
+
+  
+
+% Visualise the chosen cell's raw data 
+
+plot(time,compliance); 
+
+grid on; 
+
+xlabel('Time (s)'); 
+
+ylabel('Compliance (Pa^-^1)'); 
+
+  
+
+% Pass raw data into low-pass Butterworth filter function and output the 
+
+% sectioned time and compliance data 
+
+[comp1,time1,comp2,time2,comp3,time3,edge_time,edge_comp] = datafilter_d1(compliance,time); 
+
+  
+
+% Form time and compliance matrices for the rising edge and curve to be 
+
+% fitted to the desired regression model 
+
+butterComp12 = [comp1' comp2']; 
+
+butterTime12 = [time1 time2]; 
+
+  
+
+% Form time and compliance matrices for entire curve so both the rising and 
+
+% falling edges can be interpolated in order to calculate percentage 
+
+% recovery 
+
+butterComp123 = [comp1' comp2' comp3']; 
+
+butterTime123 = [time1 time2 time3]; 
+
+  
+
+% Pass the different matrices into interpolation function 
+
+rising_only = interpolate(butterTime12, butterComp12); 
+
+edges = interpolate(butterTime123, butterComp123); 
+
+  
+
+% For rising edge only. Combine newly created data points with original 
+
+% points to form matrices for use in regression functions 
+
+rising_times = rising_only(:,1); 
+
+interpol_rising_t = [butterTime12 rising_times']; 
+
+rising_comps = rising_only(:,2); 
+
+interpol_rising_c = [butterComp12 rising_comps']; 
+
+  
+
+% For both rising and falling edges. Combine old and new data points to 
+
+% form complate data sets of filtered data 
+
+rise_fall_times = edges(:,1); 
+
+interpol_time = [butterTime123 rise_fall_times']; 
+
+rise_fall_compliances = edges(:,2); 
+
+interpol_compliance = [butterComp123 rise_fall_compliances']; 
+
+  
+
+figure() 
+
+plot(interpol_time,interpol_compliance); 
+
+hold on; 
+
+grid on; 
+
+xlabel('Time (s)'); 
+
+ylabel('Compliance (Pa^-^1)'); 
+
+title('Raw Filtered Data vs Fitted Data') 
+
+  
+
+% Pass interpolated time and compliance values (rising edge only) into regression functions, which plot the 
+
+% raw filtered data against the result of the fit 
+
+[E0_4, E1_4, tau0_4, tau1_4, RegComp4,timeRC4] = BMRegress_4(interpol_rising_c, interpol_rising_t); 
+
+[E0_6,E1_6,E2_6,tau0_6,tau1_6,tau2_6, RegComp6,timeRC6] = BMRegress(interpol_rising_c, interpol_rising_t); 
+
+  
+
+% Plot the results of regression agains the original filtered and 
+
+% interpolated data 
+
+plot(timeRC4,RegComp4); 
+
+plot(timeRC6,RegComp6); 
+
+legend('Raw Filtered Data','Four-Element Burger Model','Six-Element Burger Model'); 
+
+  
+
+% Calculate percentage recovery 
+
+percent_recovery = PR_function(edge_time,edge_comp); 
+
+  
+
+% Calculate rough mean error between fitted and raw data for error analysis 
+
+error4 = rough_mean_error(interpol_rising_c, RegComp4); 
+
+error6 = rough_mean_error(interpol_rising_c, RegComp6); 

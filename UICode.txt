@@ -156,7 +156,7 @@ classdef filterandfit2 < matlab.apps.AppBase
             Cell = struct.StructSum.(num.Value);
             
             %set parameters from the metal bead
-            radius = 14e-6;
+            radius = 2.25e-6;
             force = 6e-9;
             csa = 2*pi*radius;
             
